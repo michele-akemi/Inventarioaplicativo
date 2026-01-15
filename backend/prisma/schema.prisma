@@ -1,1 +1,34 @@
-���rG�w�k�ɚ��!zf�����Z��(��
+// backend/prisma/schema.prisma
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Inventory {
+  id     String @id @default(uuid())
+  name   String
+  status String @default("OPEN")
+}
+
+model CountLocation {
+  id           String       @id @default(uuid())
+  inventoryId  String
+  code         String       // O código do local (ex: A01)
+  status       String       @default("OPEN") // OPEN, FINISHED
+  events       CountEvent[]
+}
+
+model CountEvent {
+  id              String        @id @default(uuid())
+  countLocationId String
+  countLocation   CountLocation @relation(fields: [countLocationId], references: [id])
+  productCode     String
+  quantity        Int
+  status          String        @default("OK") // OK, PENDING (Desconhecido)
+  createdAt       DateTime      @default(now())
+}
