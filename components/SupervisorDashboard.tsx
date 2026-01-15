@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, memo, useEffect } from 'react';
 import { 
-  FileUp, Download, PieChart, AlertTriangle, MapPin, 
+  FileUp, Download, PieChart as PieChartIcon, AlertTriangle, MapPin, 
   CheckCircle2, FileText, Upload, FileCheck, Loader2, 
   Check, X, Settings2, UserCheck, ShieldAlert, History,
   RotateCcw, Search, Square, CheckSquare, ChevronDown, Table as TableIcon,
@@ -11,6 +11,7 @@ import {
   AlertCircle, Activity, LayoutGrid, List, Pencil, Trash2, Plus, MoreHorizontal,
   RefreshCcw, Eye as EyeIcon, Send, SortAsc, Timer, TrendingUp, Users
 } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import { Product, CountLog, UnknownBarcode, InventorySession, Movement, LocationState } from '../types';
 
 interface SupervisorDashboardProps {
@@ -500,6 +501,18 @@ const SupervisorDashboard: React.FC<SupervisorDashboardProps> = ({
 
     return alerts;
   }, [session.locations, session.products, countLogs]);
+
+  // Chart Data Preparation
+  const locationStatusData = useMemo(() => {
+      const { finishedLocs, countingLocs, reviewLocs, idleLocs } = kpiStats;
+      const data = [
+          { name: 'Finalizados', value: finishedLocs, color: '#10B981' }, // Emerald-500
+          { name: 'Em Contagem', value: countingLocs, color: '#3B82F6' }, // Blue-500
+          { name: 'Revisão', value: reviewLocs, color: '#F59E0B' }, // Amber-500
+          { name: 'Não Iniciado', value: idleLocs, color: '#94A3B8' } // Slate-400
+      ];
+      return data.filter(d => d.value > 0);
+  }, [kpiStats]);
 
   const reportData = useMemo(() => {
     const results: any[] = [];
@@ -1294,7 +1307,7 @@ const SupervisorDashboard: React.FC<SupervisorDashboardProps> = ({
       <aside className="w-full md:w-80 bg-white border-r border-slate-200 p-8 flex flex-col gap-3 shadow-sm z-10">
         <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4 px-4">Painel Gestor</h2>
         {[
-          {id: 'overview', icon: PieChart, label: 'Dashboard'},
+          {id: 'overview', icon: PieChartIcon, label: 'Dashboard'},
           {id: 'progress', icon: Activity, label: 'Andamento'},
           {id: 'approvals', icon: UserCheck, label: 'Aprovações', alert: unknownBarcodes.filter(u => u.status === 'pending').length + unlockRequests.length},
           {id: 'audit', icon: ScrollText, label: 'Auditoria'},
@@ -1389,32 +1402,34 @@ const SupervisorDashboard: React.FC<SupervisorDashboardProps> = ({
                 </div>
 
                 {/* 2. LOCATION STATUS CARD */}
-                <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 flex flex-col justify-between">
-                    <div>
-                        <div className="flex items-center justify-between mb-6">
-                             <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Status dos Locais</p>
-                             <MapPin size={20} className="text-slate-300"/>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Finalizados (Fechados)
-                                </span>
-                                <span className="text-xl font-black text-emerald-600">{kpiStats.finishedLocs}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                                    <span className="w-2 h-2 rounded-full bg-blue-500"></span> Abertos / Ativos
-                                </span>
-                                <span className="text-xl font-black text-blue-600">{kpiStats.openLocs}</span>
-                            </div>
-                        </div>
+                <div className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden">
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 z-10">Status dos Locais</p>
+                    <div className="flex-1 min-h-[140px] relative z-0 -ml-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                           <PieChart>
+                              <Pie
+                                data={locationStatusData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={40}
+                                outerRadius={60}
+                                paddingAngle={5}
+                                dataKey="value"
+                              >
+                                {locationStatusData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+                                ))}
+                              </Pie>
+                              <RechartsTooltip 
+                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                                 itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                              />
+                           </PieChart>
+                        </ResponsiveContainer>
                     </div>
-                    <div className="mt-6 pt-6 border-t border-slate-50">
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-black text-slate-400 uppercase">Total Locais</span>
-                            <span className="text-lg font-black text-slate-800">{kpiStats.totalLocs}</span>
-                        </div>
+                    <div className="absolute bottom-6 right-6 flex flex-col items-end z-10 pointer-events-none">
+                       <span className="text-3xl font-black text-slate-800">{kpiStats.finishedLocs}</span>
+                       <span className="text-[10px] uppercase font-black text-emerald-500">Concluídos</span>
                     </div>
                 </div>
 
@@ -1468,7 +1483,7 @@ const SupervisorDashboard: React.FC<SupervisorDashboardProps> = ({
           </div>
         )}
 
-        {/* PROGRESS MONITORING TAB */}
+        {/* ... Rest of the component (Progress, Approvals, Audit, Reports, Imports, etc.) ... */}
         {activeTab === 'progress' && (
           <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in h-full flex flex-col">
              <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 flex-shrink-0">
