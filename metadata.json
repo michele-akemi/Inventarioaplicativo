@@ -1,0 +1,7 @@
+{
+  "name": "InventoryMaster Pro",
+  "description": "A comprehensive inventory counting application featuring dedicated supervisor and operator interfaces, barcode mapping, real-time discrepancy analysis, and detailed audit logging.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
